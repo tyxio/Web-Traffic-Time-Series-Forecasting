@@ -5,6 +5,11 @@ from common.DataStore import DataStore
 from common.DataAnalysis import DataAnalysis
 from singleStepModels.SingleStepModels import SingleStepModels 
 from multiStepModels.MultiStepModels import MultiStepModels
+from multiStepModels.Seq2SeqIntro import Seq2SeqIntro
+from multiStepModels.Seq2SeqConvIntro import Seq2SeqConvIntro
+from multiStepModels.Seq2SeqConvFull import Seq2SeqConvFull
+from naiveModels.Naives import Naives
+
 
 mpl.rcParams['figure.figsize'] = (8, 6)
 mpl.rcParams['axes.grid'] = False
@@ -16,27 +21,30 @@ dataStore = DataStore()
 print('Read Data')
 df = dataStore.read_data()
 
-# Preprocess the data
-print('Preprocess the Data')
-df = dataStore.preprocess()
-
-# Run some data analysis
-dataAnalysis = DataAnalysis(df)
-if (ANALYSIS_FFT):
-    dataAnalysis.fft()
-
 column_indices = {name: i for i, name in enumerate(df.columns)}
 num_features = df.shape[1]
 
-# Split the data. We'll use a (70%, 20%, 10%) split for the training, validation, and test sets.
-dataStore.split()
+# Prepare data for step models
+if (SS_RUN_MODELS == True or MS_RUN_MODELS == True):
+    # Preprocess the data
+    print('Preprocess the Data')
+    df = dataStore.preprocess()
 
-# Normalize the data
-dataStore.transform()
+    # Run some data analysis
+    if (ANALYSIS_FFT):
+        dataAnalysis = DataAnalysis(df)
+        dataAnalysis.fft()
 
-# play a bit with the window/dataset generator
-#if (TEST_WINDOW_GENERATOR):
-#    test_WindowGenerator(train_df, val_df, test_df)
+    # Split the data. We'll use a (70%, 20%, 10%) split for the training, validation, and test sets.
+    dataStore.split()
+
+    # Normalize the data
+    dataStore.transform()
+
+elif (NAIVE_RUN_MODELS == True):
+    # Preprocess the data
+    print('Preprocess the Data')
+    df = dataStore.preprocess()
 
 '''
 Single step models
@@ -78,7 +86,6 @@ if (SS_RUN_MODELS == True):
 
     single_step_models.model_performance()
 
-
 '''
 Multi Step Models
 '''
@@ -112,7 +119,46 @@ if (MS_RUN_MODELS == True):
     if (MS_MODEL_AUTOREGRESSIVE_RNN):
         print('Autoregressive Recurrent Neural Network')
         multi_step_models.model_autoregressive_rnn() 
+    
 
     multi_step_models.model_performance()
+
+'''
+Seq2Seq Models
+'''
+if (S2S_RUN_MODELS == True):
+    if (S2S_MODEL_SEQ2SEQ_1):
+        print('A relatively simple implementation of the core seq2seq architecture')
+        seq2SeqIntro = Seq2SeqIntro(df=df)
+        seq2SeqIntro.build_and_train()
+        seq2SeqIntro.predict()
+
+    if (S2S_MODEL_SEQ2SEQ_CONV_1):
+        print('A convolutional sequence-to-sequence neural network ')
+        seq2SeqConvIntro = Seq2SeqConvIntro(df=df)
+        seq2SeqConvIntro.build_and_train()
+        seq2SeqConvIntro.predict()
+
+    if (S2S_MODEL_SEQ2SEQ_CONV_2):
+        print('A convolutional sequence-to-sequence neural network modeled after WaveNet  ')
+        seq2SeqConvFull = Seq2SeqConvFull(df=df)
+        seq2SeqConvFull.build_and_train()
+        seq2SeqConvFull.predict()
+
+    if (S2S_MODEL_SEQ2SEQ_CONV_3):
+        print('A convolutional sequence-to-sequence neural network modeled after WaveNet  ')
+        print('Adding Exogenous Features to WaveNet  ')
+        seq2SeqConvFull = Seq2SeqConvFull(df=df)
+        seq2SeqConvFull.build_and_train()
+        seq2SeqConvFull.predict()   
+
+'''
+Seq2Seq Models
+'''
+if (NAIVE_RUN_MODELS == True):
+    if (NAIVE_LAST_3WEEK or NAIVE_LAST_3WEEK_INVERSE):
+        print('Copy last week over 3 weeks')
+        naive = Naives(df=df)
+        naive.predict_copy_last_week()
 
 print('DONE!')

@@ -64,7 +64,19 @@ for model_name, predict in predict_results.items():
         predict_results[model_name] = dataStore.inverse_transform(df=predict)
 
 # prepare the prediction we will submit to kaggle for Kaggle
-predict = predict_results[PREDICTION_MODEL]
+if (PREDICTION_MODEL == 'all'):
+    # compute average of all predictions
+    predict = np.array([])
+    n = 0
+    for _, _predict in predict_results.items():
+        if (_predict is not None):
+            if (predict.size == 0):
+                predict = np.zeros(_predict.shape)
+            predict = np.add(predict, _predict)
+            n += 1
+    predict = predict/n
+else:
+    predict = predict_results[PREDICTION_MODEL]
 
 # transform np array to dataframe
 kdf = pd.DataFrame(

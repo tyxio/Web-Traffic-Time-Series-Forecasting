@@ -1,0 +1,2 @@
+Average SMAPE:11.8
+Removed outlines

@@ -1,0 +1,8 @@
+data/input
+models
+notebooks
+reports/defi3/figures/*.png
+reports/defi3/figures-3w
+reports/defi3/kaggle/*.csv
+reports/jena
+reports/train_1

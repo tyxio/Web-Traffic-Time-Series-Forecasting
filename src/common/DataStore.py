@@ -1,4 +1,6 @@
+from tensorflow.python.training.tracking.base import NoRestoreSaveable
 from .config import *
+from.PlotUtils import plot_random_series
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -34,17 +36,22 @@ class DataStore():
             # by sub-sampling the data from 10 minute intervals to 1h:
             # slice [start:stop:step], starting from index 5 take every 6th record.
             self.df = self.df[5::6]
-            # extrct the column 'Date Time'
+            # extract the column 'Date Time'
             self.date_time = pd.to_datetime(self.df.pop(
                 'Date Time'), format='%d.%m.%Y %H:%M:%S')
         elif (PROJECT == 'defi3'):
             # in this data file there is 1 point/day
             self.df = pd.read_csv(CSV_PATH, index_col="Day", parse_dates=True)
             self.date_time = self.df.index
+        elif (PROJECT == 'train_1'):
+            # in this data file there is 1 point/day
+            self.df = pd.read_csv(CSV_PATH, nrows=DF_NUMBER_OF_SERIES, skiprows=DF_NUMBER_OF_SKIPPED_SERIES)
+            self.date_time = self.df.index
         else:
             self.df = None
             self.date_time = None
 
+        #print(self.df.info())
         print(self.df.head())
         print(self.df.shape)
 
@@ -53,7 +60,10 @@ class DataStore():
 
         # Let's take a glance at the data
         if (PLOT_INPUT_DATA == True):
-            self.view_data(self.df, self.date_time)
+            if (PROJECT == 'jena'):
+                self.view_data(self.df, self.date_time)
+            elif (PROJECT == 'train_1'):
+                plot_random_series(self.df, 6)
 
         return self.df
 
@@ -118,6 +128,7 @@ class DataStore():
 
         if (PREPROCESS_REMOVE_OUTLINERS):
             # remove outliners
+            print('remove outliners')
             for (colname, coldata) in data_filtered.iteritems():
                 data_filtered[colname] = hampel(
                     data_filtered[colname], window_size=8, n=3)
@@ -136,33 +147,40 @@ class DataStore():
         self.df = data_filtered
 
     def split(self):
-        n = len(self.df)
-        self.train_df = self.df[0:int(n*0.7)]
-        self.val_df = self.df[int(n*0.7):int(n*0.9)]
-        self.test_df = self.df[int(n*0.9):]
+        if (PROJECT == 'jena' or PROJECT == 'defi3'):
+            n = len(self.df)
+            if (NO_TEST_DF == True):
+                self.train_df = self.df[0:int(n*0.9)]
+                self.val_df = self.df[int(n*0.9):]
+                self.test_df = self.df[int(n*0.9):]
+            else:
+                self.train_df = self.df[0:int(n*0.7)]
+                self.val_df = self.df[int(n*0.7):int(n*0.9)]
+                self.test_df = self.df[int(n*0.9):]
 
     def transform(self):
-        # it is the case during training
-        self.train_mean = self.train_df.mean()
-        self.train_std = self.train_df.std()
-        # save to file
-        self.train_mean.to_pickle(os.path.join(WORK_DATA_PATH, 'train_mean.dat'))
-        self.train_std.to_pickle(os.path.join(WORK_DATA_PATH, 'train_std.dat'))
+        if (PROJECT == 'jena' or PROJECT == 'defi3'):
+            # it is the case during training
+            self.train_mean = self.train_df.mean()
+            self.train_std = self.train_df.std()
+            # save to file
+            self.train_mean.to_pickle(os.path.join(WORK_DATA_PATH, 'train_mean.dat'))
+            self.train_std.to_pickle(os.path.join(WORK_DATA_PATH, 'train_std.dat'))
 
-        # The mean and standard deviation should only be computed using the
-        # training data so that the models have no access to the values in
-        # the validation and test sets.
-        self.train_df = (self.train_df - self.train_mean) / self.train_std
-        self.val_df = (self.val_df - self.train_mean) / self.train_std
-        self.test_df = (self.test_df - self.train_mean) / self.train_std
+            # The mean and standard deviation should only be computed using the
+            # training data so that the models have no access to the values in
+            # the validation and test sets.
+            self.train_df = (self.train_df - self.train_mean) / self.train_std
+            self.val_df = (self.val_df - self.train_mean) / self.train_std
+            self.test_df = (self.test_df - self.train_mean) / self.train_std
 
-        if (PLOT_NORMALIZED_FEATURES == True):
-            df_std = (self.df - self.train_mean) / self.train_std
-            df_std = df_std.melt(var_name='Column', value_name='Normalized')
-            plt.figure(figsize=(12, 6))
-            ax = sns.violinplot(x='Column', y='Normalized', data=df_std)
-            _ = ax.set_xticklabels(self.df.keys(), rotation=90)
-            plt.show()
+            if (PLOT_NORMALIZED_FEATURES == True):
+                df_std = (self.df - self.train_mean) / self.train_std
+                df_std = df_std.melt(var_name='Column', value_name='Normalized')
+                plt.figure(figsize=(12, 6))
+                ax = sns.violinplot(x='Column', y='Normalized', data=df_std)
+                _ = ax.set_xticklabels(self.df.keys(), rotation=90)
+                plt.show()
 
         
     def transform_df(self, df):

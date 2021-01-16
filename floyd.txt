@@ -1,0 +1,11 @@
+# load csv fles into dataset
+cd data/input
+floyd data init philhu/defi3
+floyd data upload
+
+# run project using the dataset mounded as /data
+# config.py --> INPUT_DATA_PATH = '/data'
+floyd init defi3-sarima
+floyd run --gpu \
+ --env tensorflow-2.2 \
+ --data "philhu/datasets/defi3/1:/data" "python ./src/train.py"

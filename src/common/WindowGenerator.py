@@ -69,7 +69,7 @@ class WindowGenerator():
         return inputs, labels
 
     def plot(self, model=None, plot_col=PLOT_COLUMN, max_subplots=3, plot_name='figure', normed=False):
-        inputs_norm = None
+        inputs_norm = None, 
         labels_norm = None
         if (normed == True):
             inputs, labels = self.example
@@ -123,7 +123,7 @@ class WindowGenerator():
             sequence_length=self.total_window_size,
             sequence_stride=1,
             shuffle=True,
-            batch_size=32)
+            batch_size=BATCH_SIZE)
 
         ds = ds.map(self.split_window)
         

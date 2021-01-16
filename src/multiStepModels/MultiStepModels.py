@@ -5,6 +5,7 @@ from common.TfUtils import compile_and_fit, save_model
 from .MultiStepLastBaseline import MultiStepLastBaseline 
 from .RepeatBaseline import RepeatBaseline
 from .FeedBack import FeedBack
+from .Seq2SeqIntro import Seq2SeqIntro
 
 import numpy as np
 import matplotlib as mpl

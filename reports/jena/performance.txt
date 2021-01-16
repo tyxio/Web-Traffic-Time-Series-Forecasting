@@ -1,0 +1,8 @@
+Last    : 0.5157
+Repeat  : 0.3776
+Linear  : 0.2991
+Dense   : 0.2975
+Conv    : 0.2716
+LSTM    : 0.2781
+AR LSTM : 0.2870
+DONE!
