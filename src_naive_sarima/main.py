@@ -1,15 +1,17 @@
-from mypackage.utils import *
-from mypackage.sarima import *
-from mypackage.naive import *
-from mypackage.mylogging import *
+from mypackage.utils import plot_estimate2, prepare_data, report_results, kaggle_format_and_dump
+from mypackage.sarima import walk_forward_validation, sarima_configs
+from mypackage.naive import use_last_value, moving_average, simple_exp_smoothing, holt_linear_trend, holt_exp_smoothing
 from mypackage.settings import initialize_settings, smapes
-import mypackage.config as config
+from mypackage.config import *
 
 
 import os
 import ast
 import time
 import json
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 from multiprocessing import cpu_count
 from joblib import Parallel
 from joblib import delayed
@@ -113,7 +115,7 @@ def train_all_series(cfg_list):
 
     print('Prepare the train/test/predictions frames (mode:%s)...' % (mode))
     train, test, predictions = prepare_data(
-        data, remove_outliners=config.REMOVE_OUTLINERS, mode=mode)
+        data, remove_outliners=REMOVE_OUTLINERS, mode=mode)
 
     all_best_configs = list()
 
@@ -146,7 +148,7 @@ def calculate_kaggle_contest(all_best_configs):
     mode = 'kaggle'
 
     train, test, predictions = prepare_data(
-        data, remove_outliners=config.REMOVE_OUTLINERS, mode=mode)
+        data, remove_outliners=REMOVE_OUTLINERS, mode=mode)
 
     n = 0
     for (colname, _) in train.iteritems():
@@ -160,12 +162,12 @@ def calculate_kaggle_contest(all_best_configs):
         sarima_params[1] = sarima_params[1][0]
         sarima_params[2] = sarima_params[2][0]
         run_model(train, test, predictions, colname, sarima_params, mode)
-        plot_estimate2(train, test, predictions, colname, title='Forecasts', config=all_best_configs[0])
+        plot_estimate2(train, [], predictions, colname, title='Forecasts ' + colname, config=all_best_configs[0])
         n += 1
 
     print(predictions.shape)
     kaggle_format_and_dump(
-        predictions, config.KAGGLE_FILE)
+        predictions, KAGGLE_FILE)
 
 
 if __name__ == '__main__':
@@ -177,21 +179,21 @@ if __name__ == '__main__':
     print('Change dir to current folder ' + os.getcwd())
 
     print('Import the web traffic time series...')
-    data = pd.read_csv(config.DATA_FILE,
+    data = pd.read_csv(DATA_FILE,
                        index_col="Day", parse_dates=True)
     data.shape
 
     print('Initialize training')
     initialize_settings() 
 
-    cfg_list = sarima_configs(test=config.USE_TEST_CONFIG)
+    cfg_list = sarima_configs(test=USE_TEST_CONFIG)
     print('cfg_list len:', len(cfg_list))
 
     # ************************
     # GRID SEARCH
     # ************************
     sarima_params = list()
-    if (config.RUN_GRID_SEARCH):
+    if (RUN_GRID_SEARCH):
         print('Launch grid search')
         start = time.time()
         sarima_params = train_all_series(cfg_list)
@@ -199,21 +201,21 @@ if __name__ == '__main__':
         print(f'Grid search done in {end-start} secs')
 
         # save list of parameters to file
-        with open(config.PARAMS_FILE, 'w') as filehandle:
+        with open(PARAMS_FILE, 'w') as filehandle:
             json.dump(sarima_params, filehandle)
 
     # ************************
     # KAGGLE CONTEST
     # ************************
-    if (config.RUN_KAGGLE_CONTEST):
+    if (RUN_KAGGLE_CONTEST):
         print('calculate_kaggle_contest')
 
-        with open(config.PARAMS_FILE, 'r') as filehandle:
+        with open(PARAMS_FILE, 'r') as filehandle:
             sarima_params = json.load(filehandle)
 
         if (len(sarima_params) == 0):
             sarima_params = [
-                config.SARIMA_DEFAULT_PARAMETERS for i in range(data.shape[0])]
+                SARIMA_DEFAULT_PARAMETERS for i in range(data.shape[0])]
 
         calculate_kaggle_contest(sarima_params)
 

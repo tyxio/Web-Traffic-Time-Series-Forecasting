@@ -1,7 +1,7 @@
 from common.config import *
 from common.TfUtils import load_model
 from common.DataStore import DataStore
-from common.PlotUtils import plot_forecast
+from common.PlotUtils import plot_forecast, plot_prediction2
 
 import tensorflow as tf
 import numpy as np
@@ -79,6 +79,15 @@ else:
     predict = predict_results[PREDICTION_MODEL]
 
 # transform np array to dataframe
+df_predict = pd.DataFrame(
+        data=predict[0, :, :],   
+        index=pd.date_range("2017-07-31", periods=21),   
+        columns=df.columns)
+plot_prediction2(df_notnormed, df_predict, colname='series-15')
+plot_prediction2(df_notnormed, df_predict, colname='series-19')
+plot_prediction2(df_notnormed, df_predict, colname='series-21')
+plot_prediction2(df_notnormed, df_predict, colname='series-46')
+plot_prediction2(df_notnormed, df_predict, colname='series-69')
 kdf = pd.DataFrame(
         data=predict[0, :, :],   
         index=pd.date_range("2017-08-21", periods=21),   
@@ -89,6 +98,10 @@ now = datetime.now().strftime("%d%m%Y-%H%M%S")
 df_forecasts_formatted = dataStore.kaggle_keyvalue(kdf)
 df_forecasts_formatted.to_csv(os.path.join(KAGGLE_PATH, 'predict_' + now), index=False)
 
-plot_forecast(df=df_notnormed, df_forecast=kdf, colname=PLOT_COLUMN)
 
+plot_forecast(df=df_notnormed, df_forecast=kdf, colname='series-15')
+plot_forecast(df=df_notnormed, df_forecast=kdf, colname='series-19')
+plot_forecast(df=df_notnormed, df_forecast=kdf, colname='series-21')
+plot_forecast(df=df_notnormed, df_forecast=kdf, colname='series-46')
+plot_forecast(df=df_notnormed, df_forecast=kdf, colname='series-69')
 print("DONE!")

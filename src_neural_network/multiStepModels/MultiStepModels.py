@@ -5,7 +5,7 @@ from common.TfUtils import compile_and_fit, save_model
 from .MultiStepLastBaseline import MultiStepLastBaseline 
 from .RepeatBaseline import RepeatBaseline
 from .FeedBack import FeedBack
-from .Seq2SeqIntro import Seq2SeqIntro
+from common.PlotUtils import plot_fit_history
 
 import numpy as np
 import matplotlib as mpl
@@ -84,13 +84,14 @@ class MultiStepModels():
         ])
 
         history = compile_and_fit(multi_linear_model, self.multi_window)
-        
+        plot_fit_history(history=history, name='history-' + MS_MODEL_NAME_LINEAR)
+
         self.multi_val_performance['Linear'] = multi_linear_model.evaluate(self.multi_window.val)
         self.multi_performance['Linear'] = multi_linear_model.evaluate(self.multi_window.test, verbose=0)
 
         save_model(model=multi_linear_model, model_name=MS_MODEL_NAME_LINEAR)
 
-        self.multi_window.plot(model=multi_linear_model, plot_name=MS_MODEL_NAME_LINEAR) 
+        self.multi_window.plot(model=multi_linear_model, plot_cols=SERIES_TO_PLOT, plot_name=MS_MODEL_NAME_LINEAR) 
 
     def model_dense(self):
         multi_dense_model = tf.keras.Sequential([
@@ -98,9 +99,9 @@ class MultiStepModels():
             # Shape [batch, time, features] => [batch, 1, features]
             tf.keras.layers.Lambda(lambda x: x[:, -1:, :]),
             # Shape => [batch, 1, dense_units]
-            tf.keras.layers.Dense(512, activation='relu'),
-            tf.keras.layers.Dense(512, activation='relu'),
-            tf.keras.layers.Dense(512, activation='relu'),
+            tf.keras.layers.Dense(1024, activation='relu'),
+            tf.keras.layers.Dense(1024, activation='relu'),
+            tf.keras.layers.Dense(1024, activation='relu'),
             # Shape => [batch, out_steps*features]
             tf.keras.layers.Dense(MS_OUT_STEPS*self.num_features,
                                 kernel_initializer=tf.initializers.zeros()),
@@ -109,13 +110,14 @@ class MultiStepModels():
         ])
 
         history = compile_and_fit(multi_dense_model, self.multi_window)
+        plot_fit_history(history=history, name='history-' + MS_MODEL_NAME_DENSE)
 
         self.multi_val_performance['Dense'] = multi_dense_model.evaluate(self.multi_window.val)
         self.multi_performance['Dense'] = multi_dense_model.evaluate(self.multi_window.test, verbose=0)
         
         save_model(model=multi_dense_model, model_name=MS_MODEL_NAME_DENSE)
         
-        self.multi_window.plot(multi_dense_model, plot_name=MS_MODEL_NAME_DENSE)
+        self.multi_window.plot(multi_dense_model, plot_cols=SERIES_TO_PLOT, plot_name=MS_MODEL_NAME_DENSE)
 
     def model_cnn(self):
         CONV_WIDTH = 3
@@ -132,13 +134,14 @@ class MultiStepModels():
         ])
 
         history = compile_and_fit(multi_conv_model, self.multi_window)
+        plot_fit_history(history=history, name='history-' + MS_MODEL_NAME_CNN)
 
         self.multi_val_performance['Conv'] = multi_conv_model.evaluate(self.multi_window.val)
         self.multi_performance['Conv'] = multi_conv_model.evaluate(self.multi_window.test, verbose=0)
                
         save_model(model=multi_conv_model, model_name=MS_MODEL_NAME_CNN)
-   
-        self.multi_window.plot(multi_conv_model, plot_name=MS_MODEL_NAME_CNN)
+ 
+        self.multi_window.plot(multi_conv_model, plot_cols=SERIES_TO_PLOT, plot_name=MS_MODEL_NAME_CNN)
 
     def model_rnn(self):
         self.multi_lstm_model = tf.keras.Sequential([
@@ -153,13 +156,14 @@ class MultiStepModels():
         ])
 
         history = compile_and_fit(self.multi_lstm_model, self.multi_window)
-
+        plot_fit_history(history=history, name='history-' + MS_MODEL_NAME_RNN)
+        
         self.multi_val_performance['LSTM'] = self.multi_lstm_model.evaluate(self.multi_window.val)
         self.multi_performance['LSTM'] = self.multi_lstm_model.evaluate(self.multi_window.test, verbose=0)
 
         save_model(model=self.multi_lstm_model, model_name=MS_MODEL_NAME_RNN)
 
-        self.multi_window.plot(self.multi_lstm_model, plot_name=MS_MODEL_NAME_RNN)
+        self.multi_window.plot(self.multi_lstm_model, plot_cols=SERIES_TO_PLOT, plot_name=MS_MODEL_NAME_RNN)
 
     def model_autoregressive_rnn(self):
         feedback_model = FeedBack(num_features=self.num_features, units=32, out_steps=MS_OUT_STEPS)
@@ -170,13 +174,14 @@ class MultiStepModels():
         print('Output shape (batch, time, features): ', feedback_model(self.multi_window.example[0]).shape)
 
         history = compile_and_fit(feedback_model, self.multi_window)
+        plot_fit_history(history=history, name='history-' + MS_MODEL_NAME_AUTOREGRESSIVE_RNN)
 
         self.multi_val_performance['AR LSTM'] = feedback_model.evaluate(self.multi_window.val)
         self.multi_performance['AR LSTM'] = feedback_model.evaluate(self.multi_window.test, verbose=0)
         
         save_model(model=feedback_model, model_name=MS_MODEL_NAME_AUTOREGRESSIVE_RNN)
 
-        self.multi_window.plot(feedback_model, plot_name=MS_MODEL_NAME_AUTOREGRESSIVE_RNN)
+        self.multi_window.plot(feedback_model, plot_cols=SERIES_TO_PLOT, plot_name=MS_MODEL_NAME_AUTOREGRESSIVE_RNN)
 
     def model_performance(self):
         x = np.arange(len(self.multi_performance))
@@ -193,8 +198,7 @@ class MultiStepModels():
         plt.xticks(ticks=x, labels=self.multi_performance.keys(),
                 rotation=45)
         plt.ylabel(f'MAE (average over all times and outputs)')
-        _ = plt.legend()
-        
+        _ = plt.legend()        
         plt.savefig(os.path.join(FIGURES_PATH, MS_MODEL_PERFORMANCE_NAME))
         
         for name, value in self.multi_performance.items():

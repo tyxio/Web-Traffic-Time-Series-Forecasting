@@ -153,7 +153,7 @@ if (S2S_RUN_MODELS == True):
         seq2SeqConvFull.predict()   
 
 '''
-Seq2Seq Models
+Naive Models
 '''
 if (NAIVE_RUN_MODELS == True):
     if (NAIVE_LAST_3WEEK or NAIVE_LAST_3WEEK_INVERSE):

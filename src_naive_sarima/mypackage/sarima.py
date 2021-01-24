@@ -13,8 +13,8 @@ warnings.simplefilter('ignore', ValueWarning)
 def sarima_configs(seasonal=[7], test=False):
     models = list()
     if (test == True):
-        cfg = [(2,0,1), (0,1,2,7), 't']
-        #cfg = [(0,0,0), (0,0,0,0), 'naive1']
+        #cfg = [(2,0,1), (0,1,2,7), 't']
+        cfg = [(0,0,0), (0,0,0,0), 'naive5']
         #cfg = [(0,0,0), (0,0,0,0), 'naive2']
         models.append(cfg)
         return models

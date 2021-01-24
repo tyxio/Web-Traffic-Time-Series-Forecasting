@@ -11,8 +11,8 @@ SARIMA_DEFAULT_PARAMETERS="[(2,0,1), (0,1,2,7), 't']"
 #cols_to_plot = []
 #cols_to_model = ['series-10', 'series-19', 'series-20', 'series-40', 'series-44']
 #cols_to_plot = ['series-10', 'series-19', 'series-20', 'series-40', 'series-44']
-cols_to_model = ['series-20']
-cols_to_plot = ['series-20']
+cols_to_model = ['series-50', 'series-20']
+cols_to_plot = ['series-50', 'series-20']
 
 DATA_FILE=r'data/train.csv'
 RESULTS_FOLDER=r'results/series-20/'

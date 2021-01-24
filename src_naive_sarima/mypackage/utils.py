@@ -94,7 +94,8 @@ def plot_estimate2(df_train, df_test, df_forecast, colname, title='Forecasts', c
     plt.figure(figsize=(8, 3))
     plt.plot(df_train.loc['2017-06-01':'2017-08-20'].index,
              df_train.loc['2017-06-01':'2017-08-20', colname], label='Train')
-    plt.plot(df_test.index, df_test[colname], label='Test')
+    if (len(df_test) > 0):
+        plt.plot(df_test.index, df_test[colname], label='Test')
     plt.plot(df_forecast.index, df_forecast[colname], label=colname)
     plt.legend(loc='best')
     plt.title(title)

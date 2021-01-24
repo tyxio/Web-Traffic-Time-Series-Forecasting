@@ -7,8 +7,8 @@ from datetime import datetime
 from keras.optimizers import Adam
 
 from common.config import *
-from common.PlotUtils import plot_fit_history, plot_forecast, plot_prediction
-from common.TfUtils import kaggle_keyvalue, calculate_smape
+from common.PlotUtils import plot_fit_history, plot_forecast, plot_prediction, plot_random_series
+from common.TfUtils import kaggle_keyvalue
 
 class Seq2SeqBase():
     def __init__(self, df):
@@ -23,6 +23,12 @@ class Seq2SeqBase():
             print(self.df.tail())
         else:
             self.df = df
+
+        print(self.df.info())
+        print(self.df.head())
+        print(self.df.shape)
+
+        plot_random_series(self.df, 6)
 
         # Train and Validation Series Partioning
         self.pred_steps = HORIZON
@@ -72,8 +78,7 @@ class Seq2SeqBase():
 
     def transform_series_encode(self, series_array):
 
-        series_array = np.log1p(np.nan_to_num(
-            series_array))  # filling NaN with 0
+        series_array = np.log1p(np.nan_to_num(series_array))  # filling NaN with 0
         series_mean = series_array.mean(axis=1).reshape(-1, 1)
         series_array = series_array - series_mean
         series_array = series_array.reshape(

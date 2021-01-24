@@ -19,23 +19,22 @@ class Seq2SeqConvFull(Seq2SeqBase):
         return x[:,-seq_length:,:]
     
     def build_training_model(self):
-        print(f'S2S_CONVFULL_N_FILTERS:{S2S_CONVFULL_N_FILTERS}')
-        print(f'S2S_CONVFULL_N_DILATIONS:{S2S_CONVFULL_N_DILATIONS}')
         
         # convolutional operation parameters
         n_filters = S2S_CONVFULL_N_FILTERS # 32 
         filter_width = S2S_CONVFULL_FILTER_WIDTH
         dilation_rates = [2**i for i in range(S2S_CONVFULL_N_DILATIONS)] * 2 
+        n_dilation_layers = len(dilation_rates)
+        n_dilation_nodes = 2**(S2S_CONVFULL_N_DILATIONS-1)
 
         # define an input history series and pass it through a stack of dilated causal convolution blocks. 
         history_seq = Input(shape=(None, 1))
         x = history_seq
 
         skips = []
-        for dilation_rate in dilation_rates:
-            
+        for dilation_rate in dilation_rates:        
             # preprocessing - equivalent to time-distributed dense
-            x = Conv1D(16, 1, padding='same', activation='relu')(x) 
+            x = Conv1D(n_dilation_layers, 1, padding='same', activation='relu')(x) 
             
             # filter convolution
             x_f = Conv1D(filters=n_filters,
@@ -54,7 +53,7 @@ class Seq2SeqConvFull(Seq2SeqBase):
                             Activation('sigmoid')(x_g)])
             
             # postprocessing - equivalent to time-distributed dense
-            z = Conv1D(16, 1, padding='same', activation='relu')(z)
+            z = Conv1D(n_dilation_layers, 1, padding='same', activation='relu')(z)
             
             # residual connection
             x = Add()([x, z])    
@@ -66,7 +65,7 @@ class Seq2SeqConvFull(Seq2SeqBase):
         out = Activation('relu')(Add()(skips))
 
         # final time-distributed dense layers 
-        out = Conv1D(128, 1, padding='same')(out)
+        out = Conv1D(n_dilation_nodes, 1, padding='same')(out)
         out = Activation('relu')(out)
         out = Dropout(.2)(out)
         out = Conv1D(1, 1, padding='same')(out)

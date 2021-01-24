@@ -68,7 +68,7 @@ class WindowGenerator():
 
         return inputs, labels
 
-    def plot(self, model=None, plot_col=PLOT_COLUMN, max_subplots=3, plot_name='figure', normed=False):
+    def plot(self, model=None, plot_cols=[], plot_name='figure', normed=False):
         inputs_norm = None, 
         labels_norm = None
         if (normed == True):
@@ -78,13 +78,15 @@ class WindowGenerator():
             inputs = self.dataStore.inverse_transform(df=inputs_norm)
             labels = self.dataStore.inverse_transform(df=labels_norm)
 
-        plt.figure(figsize=(12, 8))
-        plot_col_index = self.column_indices[plot_col]
-        max_n = min(max_subplots, len(inputs))
-        for n in range(max_n):
-            plt.subplot(3, 1, n+1)
-            plt.ylabel(f'{plot_col} [normed]')
-            plt.plot(self.input_indices, inputs[n, :, plot_col_index],
+        plt.figure(figsize=(8, 8))
+               
+        window = 0 # len(inputs) - 1
+        for n in range(len(plot_cols)):
+            plot_col = plot_cols[n]
+            plot_col_index = self.column_indices[plot_col]
+            plt.subplot(4, 1, n+1)
+            plt.ylabel(f'{plot_col}')
+            plt.plot(self.input_indices, inputs[window, :, plot_col_index],
                     label='Inputs', marker='.', zorder=-10)
 
             if self.label_columns:
@@ -95,7 +97,7 @@ class WindowGenerator():
             if label_col_index is None:
                 continue
 
-            plt.scatter(self.label_indices, labels[n, :, label_col_index],
+            plt.scatter(self.label_indices, labels[window, :, label_col_index],
                         edgecolors='k', label='Labels', c='#2ca02c', s=64)
             if model is not None:
                 if (normed == True):
@@ -104,7 +106,7 @@ class WindowGenerator():
                     predictions_norm = model(inputs_norm)
                     predictions = self.dataStore.inverse_transform(df=predictions_norm)
                 
-                plt.scatter(self.label_indices, predictions[n, :, label_col_index],
+                plt.scatter(self.label_indices, predictions[window, :, label_col_index],
                             marker='X', edgecolors='k', label='Predictions',
                             c='#ff7f0e', s=64)
 

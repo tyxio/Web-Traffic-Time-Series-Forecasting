@@ -64,7 +64,8 @@ class DataStore():
                 self.view_data(self.df, self.date_time)
             elif (PROJECT == 'train_1'):
                 plot_random_series(self.df, 6)
-
+            #if (PROJECT == 'defi3'):
+            #    plot_random_series(self.df, 6)
         return self.df
 
     def preprocess(self):
